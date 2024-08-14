@@ -182,7 +182,7 @@ class ClusterClassifier:
         client = InferenceClient(self.summary_model, token=self.summary_model_token)
         cluster_summaries = {-1: "None"}
 
-        for label in range(unique_labels):
+        for label in tqdm(range(unique_labels)):
             ids = np.random.choice(self.label2docs[label], self.summary_n_examples)
             examples = "\n\n".join(
                 [
@@ -290,20 +290,20 @@ class ClusterClassifier:
             y = np.mean([self.projections[doc, 1] for doc in self.label2docs[label]])
             self.cluster_centers[label] = (x, y)
 
-    def show(self, interactive=False):
+    def show(self, interactive=False, fpath = None):
         df = pd.DataFrame(
             data={
                 "X": self.projections[:, 0],
                 "Y": self.projections[:, 1],
                 "labels": self.cluster_labels,
                 "content_display": [
-                    textwrap.fill(txt[:1024], 64) for txt in self.texts
+                    textwrap.fill(txt[:64], 32) for txt in self.texts
                 ],
             }
         )
 
         if interactive:
-            self._show_plotly(df)
+            self._show_plotly(df, fpath = fpath)
         else:
             self._show_mpl(df)
 
@@ -341,7 +341,7 @@ class ClusterClassifier:
             t.set_bbox(dict(facecolor='white', alpha=0.9, linewidth=0, boxstyle='square,pad=0.1'))
         ax.set_axis_off()
 
-    def _show_plotly(self, df):
+    def _show_plotly(self, df, fpath = None):
         fig = px.scatter(
             df,
             x="X",
@@ -351,6 +351,7 @@ class ClusterClassifier:
             width=1600,
             height=800,
             color_continuous_scale="HSV",
+            render_mode='webgl',
         )
 
         fig.update_traces(hovertemplate="%{customdata[0]}<extra></extra>")
@@ -362,8 +363,21 @@ class ClusterClassifier:
 
         fig.update_layout(
             template="plotly_dark",
-        )
+            dragmode='pan',  # Set the initial drag mode to panning
+            hovermode='closest',  # Show hover information for the point closest to the cursor
+            )
 
+        # Customize configuration to require pressing the Shift key for panning
+        config = {
+            'scrollZoom': True,  # Enable zooming by scrolling
+            'modeBarButtonsToAdd': ['pan2d'],  # Add the pan button to the modebar
+            'modeBarButtonsToRemove': ['zoom2d'],  # Optionally remove the zoom button from the modebar
+            'displayModeBar': True,  # Display the mode bar (toolbar)
+            'editable': True,  # Allow plot edits (such as panning) by default
+            'doubleClick': 'reset',  # Reset zoom on double-click
+            'showTips': True,  # Show tips on hover
+        }
+        
         # show cluster summaries
         for label in self.cluster_summaries.keys():
             if label == -1:
@@ -374,9 +388,13 @@ class ClusterClassifier:
             fig.add_annotation(
                 x=position[0],
                 y=position[1],
-                text=summary,
+                text=summary[:100],
                 showarrow=False,
                 yshift=0,
             )
 
-        fig.show()
+        if fpath:
+            fig.write_html(fpath, config=config)
+            print("saved to ", fpath)
+        else:
+            fig.show()
