@@ -6,6 +6,10 @@ The Text Clustering repository contains tools to easily embed and cluster texts 
 <center>Clustering of texts in the <a href="https://huggingface.co/datasets/HuggingFaceTB/cosmopedia">Cosmopedia dataset</a>.</center>
 
 
+<center><img src="https://raw.githubusercontent.com/manoja328/text-clustering/main/examples/screehsot.png"></center>
+<center> Clustering of texts in the <a href="https://huggingface.co/datasets/mychen76/openwebtext-100k">Openwebtext dataset</a>.</center>
+
+
 ## How it works
 The pipeline consists of several distinct blocks that can be customized and the whole pipeline can run in a few minutes on a consumer laptop. Each block uses existing standard methods and works quite robustly.
 
